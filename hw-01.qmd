@@ -171,7 +171,39 @@ ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
 
 ## 4 - Rental apartments in SF
 ```{R}
+library(tidyverse)
 
+# Load and clean the data
+credit <- read_csv("data/credit.csv") %>%
+  rename_with(tolower) %>%
+  mutate(
+    student = str_trim(str_to_title(student)),
+    married = str_trim(str_to_title(married)),
+    student = factor(student, levels = c("No", "Yes")),
+    married = factor(married, levels = c("No", "Yes"))
+  )
+
+# Create the exact plot
+ggplot(credit, aes(x = income, y = balance, color = student, shape = student)) +
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = "lm", se = FALSE, size = 1) +
+  facet_grid(student ~ married, labeller = label_both) +
+  scale_color_manual(values = c("No" = "#D6B85A", "Yes" = "#2E6F40")) + 
+  scale_shape_manual(values = c("No" = 16, "Yes" = 17)) +
+  scale_x_continuous(labels = scales::dollar_format(prefix = "$", suffix = "K")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  labs(
+    x = "Income",
+    y = "Credit card balance"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "grey90", color = NA),
+    strip.text = element_text(face = "bold"),
+    panel.border = element_rect(color = "grey30", fill = NA),
+    panel.spacing = unit(1, "lines"),
+  )
 
 ```
 
