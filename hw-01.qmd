@@ -1,6 +1,6 @@
 ---
 title: "HW 01"
-author: "INSERT YOUR NAME HERE"
+author: "Nilotpal Rajbongshi"
 format: 
   html:
     embed-resources: true
@@ -14,24 +14,158 @@ if (!require("pacman"))
   install.packages("pacman")
 
 # use this line for installing/loading
-# pacman::p_load() 
+pacman::p_load(tidyverse, 
+               lubridate, 
+               devtools, 
+               openintro) 
 
 devtools::install_github("tidyverse/dsbox")
 ```
 
 ## 1 - Road traffic accidents in Edinburgh
 
-```{r label-me-1}
+```{r}
+library(tidyverse)
+library(lubridate)
+accidents <- read_csv("data/accidents.csv")
 
+accidents <- accidents %>%
+  mutate(
+    date_time = dmy_hms(paste(date, as.character(time))),
+    time_of_day = hour(date_time) + minute(date_time) / 60,
+    day_type = if_else(wday(date_time) %in% c(1, 7), "Weekend", "Weekday"),
+    severity = factor(severity, levels = c("Fatal", "Serious", "Slight"))
+  )
+ggplot(accidents, aes(x = time_of_day, fill = severity)) +
+  geom_density(alpha = 0.6) +
+  facet_wrap(~ day_type, ncol = 1) +
+  scale_fill_manual(values = c("Fatal" = "#9970AB", "Serious" = "#5AAE61", "Slight" = "#FFFC5F")) +
+  labs(
+    title = "Number of accidents throughout the day",
+    subtitle = "By day of week and severity",
+    x = "Time of day",
+    y = "Density",
+    fill = "Severity"
+  ) +
+  theme_minimal()
 ```
 
 ## 2 - NYC marathon winners
 
-```{r label-me-2}
+```{r}
+library(tidyverse)
 
+# Load the CSV file
+nyc_marathon <- read_csv("data/nyc_marathon.csv")
+
+# Clean the data
+nyc_marathon <- nyc_marathon %>%
+  rename(gender = division)
+
+# Filter out rows with missing time_hrs values
+nyc_marathon_clean <- nyc_marathon %>%
+  filter(!is.na(time_hrs))
+
+# a. Histogram and boxplot of all marathon times
+ggplot(nyc_marathon_clean, aes(x = time_hrs)) +
+  geom_histogram(binwidth = 0.1, fill = "steelblue", color = "white") +
+  labs(title = "Histogram of NYC Marathon Winning Times", x = "Time (hours)", y = "Count")
+
+ggplot(nyc_marathon_clean, aes(y = time_hrs)) +
+  geom_boxplot(fill = "tomato") +
+  labs(title = "Boxplot of NYC Marathon Winning Times", y = "Time (hours)")
+
+# b. Side-by-side boxplots by gender
+ggplot(nyc_marathon_clean, aes(x = gender, y = time_hrs, fill = gender)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Men" = "lightblue", "Women" = "pink")) +
+  labs(title = "Marathon Times by Gender", x = "Gender", y = "Time (hours)")
+
+# c. Remove redundant color legend
+ggplot(nyc_marathon_clean, aes(x = gender, y = time_hrs, fill = gender)) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_fill_manual(values = c("Men" = "lightblue", "Women" = "pink")) +
+  labs(title = "Marathon Times by Gender (Simplified)", x = "Gender", y = "Time (hours)")
+
+# d. Time series of marathon times by year and gender
+ggplot(nyc_marathon_clean, aes(x = year, y = time_hrs, color = gender, shape = gender)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = gender), linetype = "dashed") +
+  scale_color_manual(values = c("Men" = "lightblue", "Women" = "pink")) +
+  labs(title = "NYC Marathon Winning Times Over Years",
+       x = "Year", y = "Time (hours)", color = "Gender", shape = "Gender")
 ```
 
 ## 3 - US counties
+a. What does the following code do? Does it work? Does it make sense? Why/why not?
+```{r label-me-3}
+ggplot(county) +
+  geom_point(aes(x = median_edu, y = median_hh_income)) +
+  geom_boxplot(aes(x = smoking_ban, y = pop2017))
+```
+Here the code is trying to plot a scatter plot of median_edu vs median_hh_income and add a box plot showing distribution of pop2017 across smoking ban. The does run without error, but does not provide the desired plotting result. It does not make sense since we are trying to mix two different x axis variables one is categorical and one is numerical.It cannot mix two different variables across variables.
+
+b. Which of the following two plots makes it easier to compare poverty levels (poverty) across people from different median education levels (median_edu)? What does this say about when to place a faceting variable across rows or columns?
+```{r }
+ggplot(county %>% filter(!is.na(median_edu))) + 
+  geom_point(aes(x = homeownership, y = poverty)) + 
+  facet_grid(median_edu ~ .)
+ggplot(county %>% filter(!is.na(median_edu))) + 
+  geom_point(aes(x = homeownership, y = poverty)) + 
+  facet_grid(. ~ median_edu)
+```
+Here the second plot makes it lot more easier to compare poverty levels across people from different median education levels as poverty on y axis aligns across columns which allows direct visual comparison, whereas poverty y axis in the first plot is not aligned side by side. Also its easier for the eye to scan the data point top to bottom. If the values are to be compared across y groups use horizontal facets. If across x axis use vertical facets.
+
+c. Recreate the R code necessary to generate the following graphs. Note that wherever a categorical variable is used in the plot, it’s metro.
+```{R}
+library(openintro)
+data(county)
+#Plot A
+ggplot(county, aes(x = homeownership, y = poverty)) + 
+  geom_point() + labs(title = "Plot A")
+```
+```{R}
+#Plot B
+ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  geom_smooth(color = "blue", se = FALSE) +labs(title = "Plot B")
+
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  stat_smooth(method = "", formula = y ~ s(x), se = FALSE, aes(group = metro), color = "green") +
+  ggtitle("Plot C")
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty)) +
+  stat_smooth(method = "gam", formula = y ~ s(x), se = FALSE, aes(group = metro), color = "BLUE")+
+  geom_point() + 
+  labs(title = "Plot D")
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty, color = metro, linetype = metro)) +
+  geom_point() +
+  geom_smooth(method = "gam", formula = y ~ s(x), se = FALSE, aes(group = metro), color = "BLUE") +
+  labs(title = "Plot E")
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty, color = metro, linetype = metro)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  scale_linetype_manual(values = c("no" = "solid", "yes" = "solid")) +
+  labs(title = "Plot F")
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point(aes(color = metro)) +
+  geom_smooth(color = "blue", se = FALSE) +labs(title = "Plot G")
+```
+```{R}
+ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +labs(title = "Plot H")
+
+```
 
 ## 4 - Rental apartments in SF
 
