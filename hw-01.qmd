@@ -17,7 +17,9 @@ if (!require("pacman"))
 pacman::p_load(tidyverse, 
                lubridate, 
                devtools, 
-               openintro) 
+               openintro,
+               ggmap,
+               pander) 
 
 devtools::install_github("tidyverse/dsbox")
 ```
@@ -168,5 +170,93 @@ ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
 ```
 
 ## 4 - Rental apartments in SF
+```{R}
+
+
+```
 
 ## 5 - Napoleon’s march.
+```{R}
+# ------------------------------------------------------------------
+# Resources Used
+# ------------------------------------------------------------------
+# 1. Exploring Minard’s 1812 plot with #ggplot2:https://www.andrewheiss.com/blog/2017/08/10/exploring-minards-1812-plot-with-ggplot2/
+#
+# 2. Minard's Map context – https://www.edwardtufte.com/tufte/minard
+#    Referred to the original visualization to guide plot design choices.
+# ------------------------------------------------------------------
+
+#Loads necessary R packages for data manipulation, visualization, and formatting.
+library(tidyverse)
+library(lubridate)
+library(ggmap)
+library(ggrepel)
+library(gridExtra)
+library(pander)
+
+#read_rds reads R data file containing Minard's Napolean dataset
+napoleon <- read_rds("data/napoleon.rds")
+
+#the data includes cities, troops, temps
+cities <- napoleon$cities
+troops <- napoleon$troops
+temps <- napoleon$temperatures
+
+#Below code draws the basic movement paths of the troops from west to east and back.
+#group=group ensures correct path segments are drawn
+ggplot(troops, aes(x = long, y = lat, group = group)) +
+  geom_path()
+
+#Enhances the plot by adding aesthetics. Adding color and size.
+ggplot(troops, aes(x = long, y = lat, group = group,
+                   color = direction, size = survivors)) +
+  geom_path()
+
+#Makes line ends rounded instead of square, improving visual smoothness. Enhances the aesthetic quality of the paths.
+ggplot(troops, aes(x = long, y = lat, group = group,
+                   color = direction, size = survivors)) +
+  geom_path(lineend = "round")
+
+ #Sets the minimum and maximum line widths for survivors, making the visualization more dramatic.Ensures line thickness clearly reflects the number of survivors.
+ggplot(troops, aes(x = long, y = lat, group = group,
+                   color = direction, size = survivors)) +
+  geom_path(lineend = "round") +
+  scale_size(range = c(0.5, 15))
+
+#scale_colour_manual sets custom colors for direction ,labs() Removes axis labels for a minimalist look. guides(), hides legends for color and size, mimicking Minard’s clean style.
+
+ggplot(troops, aes(x = long, y = lat, group = group,
+                   color = direction, size = survivors)) +
+  geom_path(lineend = "round") +
+  scale_size(range = c(0.5, 15)) +
+  scale_colour_manual(values = c("#808080", "#252523")) +
+  labs(x = NULL, y = NULL) +
+  guides(color = FALSE, size = FALSE)
+
+#Adds city locations and labels to the troop plot.geom_point(), plots cities as points at their coordinates.
+ggplot() +
+  geom_path(data = troops, aes(x = long, y = lat, group = group,
+                               color = direction, size = survivors),
+            lineend = "round") +
+  geom_point(data = cities, aes(x = long, y = lat)) +
+  geom_text(data = cities, aes(x = long, y = lat, label = city), vjust = 1.5) +
+  scale_size(range = c(0.5, 15)) +
+  scale_colour_manual(values = c("#808080", "#252523")) +
+  labs(x = NULL, y = NULL) +
+  guides(color = FALSE, size = FALSE)
+
+#geom_point(), Colors city points red for visibility.geom_text_repel(), uses ggrepel to place non-overlapping city labels, with red text and a specific font.Creates a clearer, more professional map with readable city labels.
+ggplot() +
+  geom_path(data = troops, aes(x = long, y = lat, group = group,
+                               color = direction, size = survivors),
+            lineend = "round") +
+  geom_point(data = cities, aes(x = long, y = lat),
+             color = "#0000FF") +
+  geom_text_repel(data = cities, aes(x = long, y = lat, label = city),
+                  color = "#0000FF", family = "Open Sans Condensed Bold") +
+  scale_size(range = c(0.5, 15)) +
+  scale_colour_manual(values = c("#808080", "#252523")) +
+  labs(x = NULL, y = NULL) +
+  guides(color = FALSE, size = FALSE)
+
+```
