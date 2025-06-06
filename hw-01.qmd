@@ -97,6 +97,13 @@ ggplot(nyc_marathon_clean, aes(x = year, y = time_hrs, color = gender, shape = g
   labs(title = "NYC Marathon Winning Times Over Years",
        x = "Year", y = "Time (hours)", color = "Gender", shape = "Gender")
 ```
+a.The histogram shows the shape of the distribution and clusters of values, while the box plot highlights quartiles, outliers, and the median more clearly.
+
+b. Men's marathon times tend to be lower (faster) on average compared to women, with less variability, while women's times show a wider spread.
+
+c. The redundant element is the color legend, as color already maps directly to gender. Removing it increases the data-to-ink ratio, making the visualization cleaner.
+
+d. The time series plot reveals trends over time, showing whether marathon times for men and women have decreased or remained stable, which is not visible in static distributions. Let me know if you need further refinements
 
 ## 3 - US counties
 a. What does the following code do? Does it work? Does it make sense? Why/why not?
